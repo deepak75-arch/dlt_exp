@@ -1,0 +1,39 @@
+def mcp_neuron(inputs, weights, threshold):
+    weighted_sum = sum(i * w for i, w in zip(inputs, weights))
+    return 1 if weighted_sum >= threshold else 0
+
+# Logic Gates Implementation
+
+def AND_gate(x1, x2):
+    return mcp_neuron([x1, x2], [1, 1], threshold=2)
+
+def OR_gate(x1, x2):
+    return mcp_neuron([x1, x2], [1, 1], threshold=1)
+
+def NAND_gate(x1, x2):
+    return mcp_neuron([x1, x2], [-1, -1], threshold=-1)
+
+def NOR_gate(x1, x2):
+    return mcp_neuron([x1, x2], [-1, -1], threshold=0)
+
+# XOR requires two MCP layers
+def XOR_gate(x1, x2):
+    a = NAND_gate(x1, x2)
+    b = OR_gate(x1, x2)
+    return AND_gate(a, b)
+
+# Truth Table Printer
+def print_truth_table(gate_func, name):
+    print(f"\n{name} Gate")
+    print("x1 x2 | y")
+    for x1 in [0, 1]:
+        for x2 in [0, 1]:
+            y = gate_func(x1, x2)
+            print(f"{x1}  {x2}  | {y}")
+
+# Display all gates
+print_truth_table(AND_gate, "AND")
+print_truth_table(OR_gate, "OR")
+print_truth_table(NAND_gate, "NAND")
+print_truth_table(NOR_gate, "NOR")
+print_truth_table(XOR_gate, "XOR")
