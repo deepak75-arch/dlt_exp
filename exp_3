@@ -1,0 +1,97 @@
+import numpy as np
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+
+# Activation functions
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x):
+    return sigmoid(x) * (1 - sigmoid(x))
+
+def relu(x):
+    return np.maximum(0, x)
+
+def relu_derivative(x):
+    return (x > 0).astype(float)
+
+# Neural Network class
+class NeuralNetwork:
+    def __init__(self, input_size, hidden_size, lr=0.1, epochs=10000):
+        self.lr = lr
+        self.epochs = epochs
+
+        # Initialize weights
+        self.w1 = np.random.randn(input_size, hidden_size)
+        self.b1 = np.zeros((1, hidden_size))
+
+        self.w2 = np.random.randn(hidden_size, 1)
+        self.b2 = np.zeros((1, 1))
+
+    def fit(self, X, y):
+        for _ in range(self.epochs):
+            # Forward propagation
+            z1 = np.dot(X, self.w1) + self.b1
+            a1 = relu(z1)
+
+            z2 = np.dot(a1, self.w2) + self.b2
+            a2 = sigmoid(z2)
+
+            # Loss (Binary cross-entropy)
+            loss = -np.mean(y * np.log(a2 + 1e-8) + (1 - y) * np.log(1 - a2 + 1e-8))
+
+            # Backpropagation
+            dz2 = a2 - y
+            dw2 = np.dot(a1.T, dz2) / X.shape[0]
+            db2 = np.sum(dz2, axis=0, keepdims=True) / X.shape[0]
+
+            da1 = np.dot(dz2, self.w2.T)
+            dz1 = da1 * relu_derivative(z1)
+            dw1 = np.dot(X.T, dz1) / X.shape[0]
+            db1 = np.sum(dz1, axis=0, keepdims=True) / X.shape[0]
+
+            # Update weights
+            self.w2 -= self.lr * dw2
+            self.b2 -= self.lr * db2
+            self.w1 -= self.lr * dw1
+            self.b1 -= self.lr * db1
+
+    def predict(self, X):
+        a1 = relu(np.dot(X, self.w1) + self.b1)
+        a2 = sigmoid(np.dot(a1, self.w2) + self.b2)
+        return (a2 > 0.5).astype(int)
+Train and Test
+# Create dataset
+X, y = make_moons(n_samples=1000, noise=0.2, random_state=1)
+y = y.reshape(-1, 1)  # Reshape to (n, 1)
+
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train model
+model = NeuralNetwork(input_size=2, hidden_size=4, lr=0.1, epochs=5000)
+model.fit(X_train, y_train)
+
+# Predict and evaluate
+preds = model.predict(X_test)
+acc = accuracy_score(y_test, preds)
+print("Accuracy:", acc)
+
+Plot Decision Boundary
+def plot_decision_boundary(model, X, y):
+    x_min, x_max = X[:,0].min() - 0.5, X[:,0].max() + 0.5
+    y_min, y_max = X[:,1].min() - 0.5, X[:,1].max() + 0.5
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100),
+                         np.linspace(y_min, y_max, 100))
+    grid = np.c_[xx.ravel(), yy.ravel()]
+    preds = model.predict(grid).reshape(xx.shape)
+    plt.contourf(xx, yy, preds, alpha=0.6, cmap='coolwarm')
+    plt.scatter(X[:,0], X[:,1], c=y.flatten(), cmap='coolwarm', edgecolors='k')
+    plt.title("Decision Boundary")
+    plt.show()
+
+plot_decision_boundary(model, X, y)
+
+Plot Decision Boundary
